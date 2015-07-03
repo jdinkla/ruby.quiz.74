@@ -18,16 +18,14 @@ class Words
   def Words.parse_file(filename)
     i = 1
     all_words = []
-    File.open(filename) do | file |
-      file.each_line() do |line|
-        ws = Words.parse(line)
-        next if ws.nil?
-        all_words += ws
-        i += 1 
-        if ( i % LOG_FILE_READ_NUM == 0 && $VERBOSE ) 
-          puts "  Read #{i} lines." 
-          STDOUT.flush()
-        end
+    File.foreach(filename) do |line|
+      ws = Words.parse(line)
+      next if ws.nil?
+      all_words += ws
+      i += 1 
+      if ( i % LOG_FILE_READ_NUM == 0 && $VERBOSE ) 
+        puts "  Read #{i} lines." 
+        STDOUT.flush()
       end
     end
     all_words
@@ -42,7 +40,9 @@ class Words
     # seperate all special characters by blanks
     line.gsub!(/([,;!?:.])/, ' \1 ')
     # remove unused special characters
-    line.gsub!(/["'\-+=\t\r\n()]/, " ")
+    line.gsub!(/[+=\t\r\n()"]/, " ")
+    line.gsub!(/\-+/, " - ")
+    line.gsub!(/'[^t]/, "")
     # split the line into words
     words = line.split(/[ ]+/).select { |w| w.length > 0 }
     words

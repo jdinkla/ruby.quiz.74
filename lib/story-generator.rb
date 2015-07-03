@@ -8,16 +8,13 @@ require 'markov-chain'
 #
 class StoryGenerator
 
-  attr_reader :mc
+  attr_reader :mc, :order
   
   # Initializes.
   #
-  def initialize(mc = nil) 
-    if mc.nil?
-      @mc = MarkovChain.new()
-    else
-      @mc = mc 
-    end
+  def initialize(order = 1) 
+    @mc ||= MarkovChain.new(order = order)
+    @order = order
   end
 
   # Adds the words to the MarkovChain
@@ -33,7 +30,7 @@ class StoryGenerator
     words = Words.parse_file(file)
     if ( $VERBOSE )
       puts "Read in #{words.length} words."
-      puts "Inserting file #{file}"
+      puts "Inserting words from file #{file}"
       STDOUT.flush()
     end
     @mc.add_elems(words)
@@ -41,27 +38,32 @@ class StoryGenerator
   
   # Genereates a story with n words (".", "," etc. counting as a word) 
   #
-  def story(n)
-    elems = generate(n, ".")
+  def story(n, initial_words = nil)
+    elems = generate(n, initial_words)
     format(elems)
   end
   
   # Generates a story from the Markov Chain mc of length n and which starts with a
   # successor of word.
   #
-  def generate(n, word)
+  def generate(n, words)
     lexicon = @mc.nodes()
-    word = lexicon[rand(lexicon.length)] if word.nil?
+    words = random_word(lexicon) if words.nil?
     elems = []
-    
     1.upto(n) do |i|
-      word = @mc.rand(word)
+      next_word = @mc.rand(words)
       # if no word is word, take a random one from the lexicon
-      if word.nil?
-        elems += ["."]
-        word = lexicon[rand(lexicon.length)]
+      if next_word.nil?
+        words = random_word(lexicon)
+      else
+        if 1 == @order 
+          words = next_word
+          elems << words
+        else
+          elems << words.shift()
+          words.push(next_word)
+        end
       end
-      elems << word
       if ( i % LOG_WORDS_NUM == 0 && $VERBOSE )
         puts "Generated #{i} words." 
         STDOUT.flush()
@@ -74,8 +76,14 @@ class StoryGenerator
   #
   def format(elems)
     text = elems.join(" ")
-    text.gsub!(/\ [.,!?;]\ /, '\1 ')
+    text.gsub!(/\ ([.,!?;:'"-])\ /, '\1 ')
     text
   end
 
+  # Returns a random (list of) word(s)
+  #
+  def random_word(lexicon)
+    lexicon[rand(lexicon.length)]  
+  end
+  
 end

@@ -10,7 +10,7 @@ require 'words'
 # Prints out the synopsis.
 #
 def synopsis()
-  puts "ruby main-markov-chains.rb [--help] [--number_of_words N|-n N] [--width W|-w W] [--verbose|-v] textfiles"
+  puts "ruby main-markov-chains.rb [--help] [--number_of_words N|-n N] [--width W|-w W] [--verbose|-v] [--order O|-O o] textfiles"
 end
 
 # these ugly global variables are used for printing out the progress
@@ -21,10 +21,12 @@ LOG_WORDS_NUM = 100
 $VERBOSE = nil
 $NUMBER_OF_WORDS = 100
 $WIDTH = 78
+$ORDER = 1
 
 opts = GetoptLong.new(
   ["--help", "-h", GetoptLong::NO_ARGUMENT ],
   ["--number_of_words", "--num", "-n", GetoptLong::REQUIRED_ARGUMENT ],
+  ["--order", "--ord", "-o", GetoptLong::REQUIRED_ARGUMENT ],
   ["--width", "-w", GetoptLong::REQUIRED_ARGUMENT ],
   ["--verbose", "-v", GetoptLong::NO_ARGUMENT ]
 )
@@ -40,6 +42,8 @@ opts.each do |opt, arg|
     $VERBOSE = true
   when "--width"
     $WIDTH = Integer(arg)
+  when "--order"
+    $ORDER = Integer(arg)
   end 
 end
 
@@ -53,7 +57,7 @@ end
 
 # main
 # our story generator
-sg = StoryGenerator.new()
+sg = StoryGenerator.new(order = $ORDER)
 # feed all the files into it
 files.each do |file|
   sg.add_file(file)
@@ -89,6 +93,3 @@ while index < story.length()
   index += 1
 end
 puts story[last..-1]
-
-
-
